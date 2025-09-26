@@ -1,1 +1,3 @@
-# 1030511291_BS435_WebProgramlama
+Öğrenci Numarası: 1030511291
+Öğrenci Adı: Furkan Coşkun
+Ders Adı: BS435 WebProgramlama
