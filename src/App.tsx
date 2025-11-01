@@ -1,35 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import StartScreen from './components/StartScreen';
+import ModeSelect from './components/ModeSelect';
+import type { AppState, Mode } from './types/game';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+    const [state, setState] = useState<AppState>({ screen: 'start' });
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    // Start ekranından Mode seçimine geç
+    const goMode = () => setState({ screen: 'mode' });
+
+    // Mode seçildiğinde şimdilik sadece state'e yazıyoruz
+    const selectMode = (mode: Mode) => {
+        // Kısım B’de burada 'game' ekranına geçeceğiz.
+        setState({ screen: 'mode', mode });
+    };
+
+    return (
+        <div>
+            {state.screen === 'start' && <StartScreen onStart={goMode} />}
+
+            {state.screen === 'mode' && (
+                <ModeSelect onSelect={selectMode} />
+            )}
+        </div>
+    );
 }
-
-export default App
