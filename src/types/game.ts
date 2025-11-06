@@ -1,4 +1,6 @@
+
 export type Mode = 'classic' | 'time';
+
 export type Screen = 'start' | 'mode' | 'game' | 'result';
 
 export interface GameResult {
