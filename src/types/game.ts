@@ -14,3 +14,11 @@ export interface AppState {
     mode?: Mode;
     lastResult?: GameResult;
 }
+
+export interface ImageItem {
+    id: string;
+    url: string;
+    isAI: boolean;
+    category: 'portrait' | 'landscape' | 'architecture' | 'abstract';
+    hints: string[];
+}
