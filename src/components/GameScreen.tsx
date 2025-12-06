@@ -1,7 +1,7 @@
-
+// src/components/GameScreen.tsx
 import { useState } from 'react';
 import type { Mode, GameResult, ImageItem } from '../types/game';
-import { images } from '../data/images';
+import { images } from '../Data/images';
 
 type Props = {
     mode: Mode;
@@ -36,34 +36,81 @@ function createRoundImages(all: ImageItem[]): ImageItem[] {
 
     const pickedAI = getRandomItem(ai);
 
-    // gerçeklerden ikisini seç
     const realCopy = [...real];
     const firstReal = getRandomItem(realCopy);
     const remainingReal = realCopy.filter((r) => r.id !== firstReal.id);
     const secondReal = getRandomItem(remainingReal);
 
-    // 3'lü seti karışık sıraya koy
     return shuffle([pickedAI, firstReal, secondReal]);
 }
 
 export default function GameScreen({ mode, onEnd }: Props) {
     const [roundImages] = useState<ImageItem[]>(() => createRoundImages(images));
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    const [firstGuessId, setFirstGuessId] = useState<string | null>(null);
+    const [secondGuessId, setSecondGuessId] = useState<string | null>(null);
+    const [isFirstGuessCorrect, setIsFirstGuessCorrect] = useState<boolean | null>(null);
+    const [showHint, setShowHint] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
 
     const modeLabel = mode === 'classic' ? 'Klasik (Süre Yok)' : 'Zamanlı (Geri Sayım)';
+    const aiImage = roundImages.find((img) => img.isAI) || null;
 
     const handleSelect = (image: ImageItem) => {
-        // Sadece ilk tahmine izin ver
-        if (selectedId) return;
+        if (isFinished) return;
 
-        setSelectedId(image.id);
+        // 1. TAHMİN
+        if (!firstGuessId) {
+            setFirstGuessId(image.id);
 
-        const result: GameResult = {
-            correct: image.isAI,
-            firstGuessId: image.id,
-        };
+            if (image.isAI) {
+                // İlk tahmin doğru → oyun biter
+                setIsFirstGuessCorrect(true);
+                setIsFinished(true);
 
-        onEnd(result);
+                const result: GameResult = {
+                    correct: true,
+                    firstGuessId: image.id,
+                };
+                onEnd(result);
+            } else {
+                // İlk tahmin yanlış → ipucu göster, ikinci şansı bekle
+                setIsFirstGuessCorrect(false);
+                setShowHint(true);
+            }
+            return;
+        }
+
+        // 2. TAHMİN (ilk tahmin yanlışsa ve bu ikinci seçimse)
+        if (!secondGuessId && firstGuessId && !isFirstGuessCorrect && image.id !== firstGuessId) {
+            setSecondGuessId(image.id);
+            const correct = image.isAI;
+            setIsFinished(true);
+
+            const result: GameResult = {
+                correct,
+                firstGuessId,
+                secondGuessId: image.id,
+            };
+
+            onEnd(result);
+        }
+    };
+
+    const canClick = (img: ImageItem): boolean => {
+        if (isFinished) return false;
+
+        // İlk tahmin yapılmadı → her şeye basabilir
+        if (!firstGuessId) return true;
+
+        // İlk tahmin yanlış → ikinci şans:
+        // Sadece diğer iki karta basılabilir (ilk seçilen hariç, ikinci henüz yokken)
+        if (!isFirstGuessCorrect && !secondGuessId) {
+            return img.id !== firstGuessId;
+        }
+
+        // Diğer durumlarda tıklama kapalı
+        return false;
     };
 
     return (
@@ -76,6 +123,32 @@ export default function GameScreen({ mode, onEnd }: Props) {
                 Seçilen mod: <b>{modeLabel}</b>
             </p>
 
+            {/* Durum mesajı */}
+            <p style={{ fontSize: 13, color: '#555', marginBottom: 12, textAlign: 'center' }}>
+                {!firstGuessId && 'AI tarafından üretilmiş olduğunu düşündüğün görseli seç.'}
+                {firstGuessId && isFirstGuessCorrect === false && !secondGuessId && 'İlk tahminin yanlış. İpucunu oku ve kalan iki görselden birini seç.'}
+                {isFinished && 'Tur bitti, sonuç ekranına yönlendiriliyorsun.'}
+            </p>
+
+            {/* İpucu alanı (sadece ilk tahmin yanlışsa) */}
+            {showHint && aiImage && (
+                <div
+                    style={{
+                        margin: '0 auto 20px',
+                        maxWidth: 600,
+                        padding: 12,
+                        borderRadius: 8,
+                        background: '#eef2ff',
+                        border: '1px solid #c7d2fe',
+                        fontSize: 13,
+                    }}
+                >
+                    <strong>İpucu:</strong>{' '}
+                    <span>{aiImage.hints[0] ?? 'Görselin detaylarına dikkat et.'}</span>
+                </div>
+            )}
+
+            {/* 3 görselllik grid */}
             <div
                 style={{
                     display: 'grid',
@@ -85,22 +158,38 @@ export default function GameScreen({ mode, onEnd }: Props) {
                 }}
             >
                 {roundImages.map((img) => {
-                    const isSelected = img.id === selectedId;
+                    const isFirst = img.id === firstGuessId;
+                    const isSecond = img.id === secondGuessId;
+
+                    const clickable = canClick(img);
+
+                    let borderColor = '#e5e7eb';
+
+                    if (isFirst) {
+                        borderColor = '#2563eb'; // mavi
+                    }
+                    if (isSecond) {
+                        borderColor = '#7c3aed'; // mor
+                    }
+                    if (isFinished && img.isAI) {
+                        borderColor = '#22c55e'; // doğru cevap: yeşil çerçeve
+                    }
 
                     return (
                         <button
                             key={img.id}
                             onClick={() => handleSelect(img)}
+                            disabled={!clickable}
                             style={{
                                 borderRadius: 12,
                                 overflow: 'hidden',
-                                border: isSelected ? '3px solid #2563eb' : '1px solid #e5e7eb',
+                                border: `3px solid ${borderColor}`,
                                 padding: 0,
-                                cursor: selectedId ? 'default' : 'pointer',
-                                opacity: selectedId && !isSelected ? 0.6 : 1,
+                                cursor: clickable ? 'pointer' : 'default',
+                                opacity: !clickable && !isFirst && !isSecond ? 0.6 : 1,
                                 background: '#fff',
+                                transition: 'transform 0.1s ease, box-shadow 0.1s ease',
                             }}
-                            disabled={!!selectedId} // ilk tahminden sonra hepsi kilit
                         >
                             <img
                                 src={img.url}
@@ -117,10 +206,8 @@ export default function GameScreen({ mode, onEnd }: Props) {
                 })}
             </div>
 
-            <p style={{ fontSize: 13, color: '#777', textAlign: 'center' }}>
-                sadece ilk tahmin aktif.
-                <br />
-                Gelecek hafta: yanlış ilk tahminde ipucu + ikinci şans eklenecek.
+            <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
+                İlk seçimde yanlış yaparsan, ipucu aldıktan sonra sadece kalan iki görselden seçim yapabilirsin.
             </p>
         </div>
     );
