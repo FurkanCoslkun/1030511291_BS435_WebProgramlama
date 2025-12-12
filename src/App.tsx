@@ -6,9 +6,14 @@ import ResultScreen from './components/ResultScreen';
 import type { AppState, Mode, GameResult } from './types/game';
 
 export default function App() {
-    const [state, setState] = useState<AppState>({ screen: 'start' });
+
 
     const goMode = () => setState({ screen: 'mode' });
+
+    const [state, setState] = useState<AppState>({
+        screen: 'start',
+        classicScore: 0,
+    });
 
     const selectMode = (mode: Mode) => {
         setState({
@@ -18,13 +23,21 @@ export default function App() {
     };
 
     const endGame = (result: GameResult) => {
-        setState(prev => ({
-            ...prev,
-            screen: 'result',
-            lastResult: result,
-        }));
-    };
+        setState(prev => {
+            let newScore = prev.classicScore ?? 0;
 
+            if (prev.mode === 'classic' && result.correct) {
+                newScore = newScore + 1;  // doğru tahminde skor artar
+            }
+
+            return {
+                ...prev,
+                screen: 'result',
+                lastResult: result,
+                classicScore: newScore,
+            };
+        });
+    };
     const restart = () => {
         setState({ screen: 'start' });
     };
@@ -40,7 +53,11 @@ export default function App() {
             )}
 
             {state.screen === 'result' && state.lastResult && (
-                <ResultScreen result={state.lastResult} onRestart={restart} />
+                <ResultScreen
+                    result={state.lastResult}
+                    score={state.classicScore ?? 0}   //skor
+                    onRestart={restart}
+                />
             )}
         </div>
     );

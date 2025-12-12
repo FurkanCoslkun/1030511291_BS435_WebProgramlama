@@ -1,4 +1,4 @@
-// src/components/GameScreen.tsx
+
 import { useState } from 'react';
 import type { Mode, GameResult, ImageItem } from '../types/game';
 import { images } from '../Data/images';
@@ -14,7 +14,7 @@ function getRandomItem<T>(arr: T[]): T {
     return arr[idx];
 }
 
-// Diziyi karıştır (Fisher–Yates)
+// Diziyi karıştır
 function shuffle<T>(arr: T[]): T[] {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -109,7 +109,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
             return img.id !== firstGuessId;
         }
 
-        // Diğer durumlarda tıklama kapalı
+
         return false;
     };
 

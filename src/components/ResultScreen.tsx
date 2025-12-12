@@ -2,10 +2,11 @@ import type { GameResult } from '../types/game';
 
 type Props = {
     result: GameResult;
+    score: number;
     onRestart: () => void;
 };
 
-export default function ResultScreen({ result, onRestart }: Props) {
+export default function ResultScreen({ result, score, onRestart }: Props) {
     const message = result.correct
         ? 'Tebrikler! Doğru tahmin yaptın. 🎉'
         : 'Bu tur olmadı, tekrar deneyebilirsin. 😅';
@@ -14,6 +15,11 @@ export default function ResultScreen({ result, onRestart }: Props) {
         <div style={{ padding: 24, maxWidth: 640, margin: '40px auto', textAlign: 'center' }}>
             <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Sonuç</h2>
             <p style={{ fontSize: 14, marginBottom: 16 }}>{message}</p>
+
+            <p style={{ fontSize: 14, marginBottom: 20 }}>
+                <b>Klasik Mod Skoru:</b> {score}
+            </p>
+
             <button
                 onClick={onRestart}
                 style={{

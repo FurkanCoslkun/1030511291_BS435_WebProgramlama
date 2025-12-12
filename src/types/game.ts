@@ -13,6 +13,7 @@ export interface AppState {
     screen: Screen;
     mode?: Mode;
     lastResult?: GameResult;
+    classicScore?: number;
 }
 
 export interface ImageItem {
