@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import type { Mode, GameResult, ImageItem } from '../types/game';
 import { images } from '../Data/images';
@@ -8,13 +7,11 @@ type Props = {
     onEnd: (result: GameResult) => void;
 };
 
-// Rastgele eleman seç
 function getRandomItem<T>(arr: T[]): T {
     const idx = Math.floor(Math.random() * arr.length);
     return arr[idx];
 }
 
-// Diziyi karıştır
 function shuffle<T>(arr: T[]): T[] {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -24,7 +21,6 @@ function shuffle<T>(arr: T[]): T[] {
     return copy;
 }
 
-// Her tur için: 1 AI + 2 gerçek seç
 function createRoundImages(all: ImageItem[]): ImageItem[] {
     const real = all.filter((img) => !img.isAI);
     const ai = all.filter((img) => img.isAI);
@@ -35,10 +31,8 @@ function createRoundImages(all: ImageItem[]): ImageItem[] {
     }
 
     const pickedAI = getRandomItem(ai);
-
-    const realCopy = [...real];
-    const firstReal = getRandomItem(realCopy);
-    const remainingReal = realCopy.filter((r) => r.id !== firstReal.id);
+    const firstReal = getRandomItem(real);
+    const remainingReal = real.filter((r) => r.id !== firstReal.id);
     const secondReal = getRandomItem(remainingReal);
 
     return shuffle([pickedAI, firstReal, secondReal]);
@@ -49,166 +43,189 @@ export default function GameScreen({ mode, onEnd }: Props) {
 
     const [firstGuessId, setFirstGuessId] = useState<string | null>(null);
     const [secondGuessId, setSecondGuessId] = useState<string | null>(null);
-    const [isFirstGuessCorrect, setIsFirstGuessCorrect] = useState<boolean | null>(null);
+
+    const [firstGuessWrong, setFirstGuessWrong] = useState(false);
     const [showHint, setShowHint] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
 
-    const modeLabel = mode === 'classic' ? 'Klasik (Süre Yok)' : 'Zamanlı (Geri Sayım)';
-    const aiImage = roundImages.find((img) => img.isAI) || null;
+    const modeLabel = mode === 'classic' ? 'Klasik' : 'Zamanlı';
+    const modeDesc =
+        mode === 'classic' ? 'Süre sınırı yok. Dikkatli seç!' : 'Geri sayım eklenecek (sonraki adım).';
+
+    const aiImage = roundImages.find((img) => img.isAI) ?? null;
 
     const handleSelect = (image: ImageItem) => {
         if (isFinished) return;
 
-        // 1. TAHMİN
+        // 1) İlk tahmin
         if (!firstGuessId) {
             setFirstGuessId(image.id);
 
             if (image.isAI) {
-                // İlk tahmin doğru → oyun biter
-                setIsFirstGuessCorrect(true);
                 setIsFinished(true);
-
-                const result: GameResult = {
-                    correct: true,
-                    firstGuessId: image.id,
-                };
-                onEnd(result);
+                onEnd({ correct: true, firstGuessId: image.id });
             } else {
-                // İlk tahmin yanlış → ipucu göster, ikinci şansı bekle
-                setIsFirstGuessCorrect(false);
+                setFirstGuessWrong(true);
                 setShowHint(true);
             }
             return;
         }
 
-        // 2. TAHMİN (ilk tahmin yanlışsa ve bu ikinci seçimse)
-        if (!secondGuessId && firstGuessId && !isFirstGuessCorrect && image.id !== firstGuessId) {
+        // 2) İkinci tahmin
+        if (firstGuessWrong && !secondGuessId && image.id !== firstGuessId) {
             setSecondGuessId(image.id);
-            const correct = image.isAI;
             setIsFinished(true);
 
-            const result: GameResult = {
-                correct,
+            onEnd({
+                correct: image.isAI,
                 firstGuessId,
                 secondGuessId: image.id,
-            };
-
-            onEnd(result);
+            });
         }
     };
 
     const canClick = (img: ImageItem): boolean => {
         if (isFinished) return false;
-
-        // İlk tahmin yapılmadı → her şeye basabilir
         if (!firstGuessId) return true;
-
-        // İlk tahmin yanlış → ikinci şans:
-        // Sadece diğer iki karta basılabilir (ilk seçilen hariç, ikinci henüz yokken)
-        if (!isFirstGuessCorrect && !secondGuessId) {
-            return img.id !== firstGuessId;
-        }
-
-
+        if (firstGuessWrong && !secondGuessId) return img.id !== firstGuessId;
         return false;
     };
 
     return (
-        <div style={{ padding: 24, maxWidth: 900, margin: '40px auto' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8, textAlign: 'center' }}>
-                Oyun Ekranı
-            </h2>
-
-            <p style={{ fontSize: 14, color: '#555', marginBottom: 16, textAlign: 'center' }}>
-                Seçilen mod: <b>{modeLabel}</b>
-            </p>
-
-            {/* Durum mesajı */}
-            <p style={{ fontSize: 13, color: '#555', marginBottom: 12, textAlign: 'center' }}>
-                {!firstGuessId && 'AI tarafından üretilmiş olduğunu düşündüğün görseli seç.'}
-                {firstGuessId && isFirstGuessCorrect === false && !secondGuessId && 'İlk tahminin yanlış. İpucunu oku ve kalan iki görselden birini seç.'}
-                {isFinished && 'Tur bitti, sonuç ekranına yönlendiriliyorsun.'}
-            </p>
-
-            {/* İpucu alanı (sadece ilk tahmin yanlışsa) */}
-            {showHint && aiImage && (
+        <div
+            style={{
+                minHeight: '100vh',
+                display: 'grid',
+                placeItems: 'center',
+                padding: 24,
+                background:
+                    'radial-gradient(1200px circle at 20% 10%, rgba(99,102,241,0.25), transparent 40%), radial-gradient(900px circle at 80% 40%, rgba(34,197,94,0.18), transparent 45%), #0b0f19',
+                color: '#e5e7eb',
+            }}
+        >
+            <div style={{ width: 'min(1100px, 100%)' }}>
                 <div
                     style={{
-                        margin: '0 auto 20px',
-                        maxWidth: 600,
-                        padding: 12,
-                        borderRadius: 8,
-                        background: '#eef2ff',
-                        border: '1px solid #c7d2fe',
-                        fontSize: 13,
+                        display: 'flex',
+                        gap: 12,
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: 14,
                     }}
                 >
-                    <strong>İpucu:</strong>{' '}
-                    <span>{aiImage.hints[0] ?? 'Görselin detaylarına dikkat et.'}</span>
+                    <div
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 10px',
+                            borderRadius: 999,
+                            background: 'rgba(99,102,241,0.18)',
+                            border: '1px solid rgba(99,102,241,0.35)',
+                            fontSize: 12,
+                            color: '#c7d2fe',
+                        }}
+                    >
+                        <span>Adım 2/2</span>
+                        <span style={{ opacity: 0.7 }}>•</span>
+                        <span>Oyun</span>
+                    </div>
+
+                    <div style={{ fontSize: 12, color: '#94a3b8' }}>
+                        Mod: <b style={{ color: '#e5e7eb' }}>{modeLabel}</b> — {modeDesc}
+                    </div>
                 </div>
-            )}
 
-            {/* 3 görselllik grid */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                    gap: 16,
-                    marginBottom: 24,
-                }}
-            >
-                {roundImages.map((img) => {
-                    const isFirst = img.id === firstGuessId;
-                    const isSecond = img.id === secondGuessId;
+                <div
+                    style={{
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        borderRadius: 16,
+                        padding: 18,
+                        background: 'rgba(255,255,255,0.06)',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+                    }}
+                >
+                    <div style={{ marginBottom: 12 }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>AI görseli bul</div>
+                        <div style={{ fontSize: 13, color: '#cbd5e1' }}>
+                            {!firstGuessId && 'AI tarafından üretilmiş olduğunu düşündüğün görseli seç.'}
+                            {firstGuessId && firstGuessWrong && !secondGuessId &&
+                                'İlk tahminin yanlış. İpucunu oku ve kalan iki görselden birini seç.'}
+                            {isFinished && 'Tur bitti, sonuç ekranına yönlendiriliyorsun.'}
+                        </div>
+                    </div>
 
-                    const clickable = canClick(img);
-
-                    let borderColor = '#e5e7eb';
-
-                    if (isFirst) {
-                        borderColor = '#2563eb'; // mavi
-                    }
-                    if (isSecond) {
-                        borderColor = '#7c3aed'; // mor
-                    }
-                    if (isFinished && img.isAI) {
-                        borderColor = '#22c55e'; // doğru cevap: yeşil çerçeve
-                    }
-
-                    return (
-                        <button
-                            key={img.id}
-                            onClick={() => handleSelect(img)}
-                            disabled={!clickable}
+                    {showHint && (
+                        <div
                             style={{
+                                marginBottom: 14,
+                                padding: 12,
                                 borderRadius: 12,
-                                overflow: 'hidden',
-                                border: `3px solid ${borderColor}`,
-                                padding: 0,
-                                cursor: clickable ? 'pointer' : 'default',
-                                opacity: !clickable && !isFirst && !isSecond ? 0.6 : 1,
-                                background: '#fff',
-                                transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+                                background: 'rgba(99,102,241,0.12)',
+                                border: '1px solid rgba(99,102,241,0.25)',
+                                fontSize: 13,
                             }}
                         >
-                            <img
-                                src={img.url}
-                                alt={img.category}
-                                style={{
-                                    width: '100%',
-                                    height: 220,
-                                    objectFit: 'cover',
-                                    display: 'block',
-                                }}
-                            />
-                        </button>
-                    );
-                })}
-            </div>
+                            <b style={{ color: '#c7d2fe' }}>İpucu:</b>{' '}
+                            {aiImage?.hints?.[0] ?? 'Görselin detaylarına dikkat et.'}
+                        </div>
+                    )}
 
-            <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
-                İlk seçimde yanlış yaparsan, ipucu aldıktan sonra sadece kalan iki görselden seçim yapabilirsin.
-            </p>
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                            gap: 14,
+                        }}
+                    >
+                        {roundImages.map((img) => {
+                            const clickable = canClick(img);
+                            const isFirst = img.id === firstGuessId;
+                            const isSecond = img.id === secondGuessId;
+
+                            let borderColor = 'rgba(255,255,255,0.12)';
+                            if (isFirst) borderColor = 'rgba(99,102,241,0.85)';
+                            if (isSecond) borderColor = 'rgba(124,58,237,0.85)';
+                            if (isFinished && img.isAI) borderColor = 'rgba(34,197,94,0.95)';
+
+                            return (
+                                <button
+                                    type="button"
+                                    key={img.id}
+                                    onClick={() => handleSelect(img)}
+                                    disabled={!clickable}
+                                    style={{
+                                        borderRadius: 14,
+                                        overflow: 'hidden',
+                                        border: `3px solid ${borderColor}`,
+                                        padding: 0,
+                                        cursor: clickable ? 'pointer' : 'default',
+                                        background: 'rgba(0,0,0,0.25)',
+                                        opacity: !clickable && !isFirst && !isSecond ? 0.65 : 1,
+                                        boxShadow: '0 12px 24px rgba(0,0,0,0.25)',
+                                    }}
+                                >
+                                    <img
+                                        src={img.url}
+                                        alt={img.category}
+                                        style={{
+                                            width: '100%',
+                                            height: 250,
+                                            objectFit: 'cover',
+                                            display: 'block',
+                                        }}
+                                    />
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div style={{ marginTop: 12, fontSize: 12, color: '#94a3b8' }}>
+                        Not: İlk seçimde yanlış yaparsan, ipucu aldıktan sonra sadece kalan iki görselden seçim yapabilirsin.
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
