@@ -4,13 +4,14 @@ type Props = {
     result: GameResult;
     score: number;
     onRestart: () => void;
+    onMenu: () => void;
 };
 
-export default function ResultScreen({ result, score, onRestart }: Props) {
+export default function ResultScreen({ result, score, onRestart, onMenu }: Props) {
     const title = result.correct ? 'Tebrikler! 🎉' : 'Bu tur olmadı 😅';
     const desc = result.correct
-        ? 'AI görselini doğru buldun. Yeni tura geçebilirsin.'
-        : 'AI görselini bulamadın. İstersen hemen yeni tur başlat.';
+        ? 'AI görselini doğru buldun. Yeni tura geçebilir veya modu değiştirebilirsin.'
+        : 'AI görselini bulamadın. Yeni tur başlatabilir veya modu değiştirebilirsin.';
 
     return (
         <div
@@ -44,7 +45,9 @@ export default function ResultScreen({ result, score, onRestart }: Props) {
                         padding: '6px 10px',
                         borderRadius: 999,
                         background: result.correct ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.16)',
-                        border: result.correct ? '1px solid rgba(34,197,94,0.30)' : '1px solid rgba(239,68,68,0.28)',
+                        border: result.correct
+                            ? '1px solid rgba(34,197,94,0.30)'
+                            : '1px solid rgba(239,68,68,0.28)',
                         fontSize: 12,
                         color: result.correct ? '#bbf7d0' : '#fecaca',
                         marginBottom: 10,
@@ -98,28 +101,47 @@ export default function ResultScreen({ result, score, onRestart }: Props) {
                     </div>
                 </div>
 
-                <button
-                    onClick={onRestart}
-                    style={{
-                        width: '100%',
-                        padding: '12px 14px',
-                        borderRadius: 12,
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        background: 'linear-gradient(135deg, rgba(99,102,241,0.95), rgba(34,197,94,0.75))',
-                        color: '#0b0f19',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        boxShadow: '0 10px 22px rgba(0,0,0,0.35)',
-                    }}
-                >
-                    Yeni Tur 🔁
-                </button>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                    <button
+                        type="button"
+                        onClick={onRestart}
+                        style={{
+                            padding: '12px 16px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(255,255,255,0.14)',
+                            background: 'linear-gradient(135deg, rgba(99,102,241,0.95), rgba(34,197,94,0.75))',
+                            color: '#0b0f19',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            boxShadow: '0 10px 22px rgba(0,0,0,0.35)',
+                            minWidth: 160,
+                        }}
+                    >
+                        Yeni Tur 🔁
+                    </button>
 
-                <div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
+                    <button
+                        type="button"
+                        onClick={onMenu}
+                        style={{
+                            padding: '12px 16px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(255,255,255,0.20)',
+                            background: 'rgba(0,0,0,0.20)',
+                            color: '#e5e7eb',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            minWidth: 160,
+                        }}
+                    >
+                        Mod Değiştir 🏠
+                    </button>
+                </div>
+
+                <div style={{ marginTop: 12, fontSize: 12, color: '#94a3b8' }}>
                     Not: Zamanlı mod için geri sayımı bir sonraki adımda ekleyeceğiz.
                 </div>
             </div>
         </div>
     );
 }
-

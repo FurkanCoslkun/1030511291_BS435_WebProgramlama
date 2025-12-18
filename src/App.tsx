@@ -38,11 +38,23 @@ export default function App() {
         });
     };
 
+    // Yeni tur: aynı modla devam
     const restart = () => {
         setState(prev => ({
             ...prev,
             screen: 'game',
             lastResult: undefined,
+            // mode aynı kalsın
+        }));
+    };
+
+    // Mod değiştir: mod seçme ekranına dön
+    const goMenu = () => {
+        setState(prev => ({
+            ...prev,
+            screen: 'mode',
+            lastResult: undefined,
+            // mode kalsın/kalmayın fark etmez; seçince üzerine yazılacak
         }));
     };
 
@@ -61,6 +73,7 @@ export default function App() {
                     result={state.lastResult}
                     score={state.classicScore ?? 0}
                     onRestart={restart}
+                    onMenu={goMenu}
                 />
             )}
         </div>
