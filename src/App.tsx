@@ -11,10 +11,12 @@ export default function App() {
         classicScore: 0,
     });
 
+    // Start -> Mode
     const goMode = () => {
-        setState(prev => ({ ...prev, screen: 'mode' }));
+        setState(prev => ({ ...prev, screen: 'mode', lastResult: undefined }));
     };
 
+    // Mode -> Game
     const selectMode = (mode: Mode) => {
         setState(prev => ({
             ...prev,
@@ -24,6 +26,7 @@ export default function App() {
         }));
     };
 
+    // Game -> Result
     const endGame = (result: GameResult) => {
         setState(prev => {
             let newScore = prev.classicScore ?? 0;
@@ -38,7 +41,7 @@ export default function App() {
         });
     };
 
-    // Yeni tur: aynı modla devam
+    // Result -> Game (aynı modla yeni tur)
     const restart = () => {
         setState(prev => ({
             ...prev,
@@ -48,13 +51,21 @@ export default function App() {
         }));
     };
 
-    // Mod değiştir: mod seçme ekranına dön
+    // Result -> ModeSelect (mod değiştir)
     const goMenu = () => {
         setState(prev => ({
             ...prev,
             screen: 'mode',
             lastResult: undefined,
-            // mode kalsın/kalmayın fark etmez; seçince üzerine yazılacak
+        }));
+    };
+
+    // Result -> StartScreen (ana menü)
+    const goHome = () => {
+        setState(prev => ({
+            ...prev,
+            screen: 'start',
+            lastResult: undefined,
         }));
     };
 
@@ -74,6 +85,7 @@ export default function App() {
                     score={state.classicScore ?? 0}
                     onRestart={restart}
                     onMenu={goMenu}
+                    onHome={goHome}
                 />
             )}
         </div>

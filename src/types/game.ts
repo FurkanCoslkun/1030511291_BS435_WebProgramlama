@@ -20,6 +20,6 @@ export interface ImageItem {
     id: string;
     url: string;
     isAI: boolean;
-    category: 'portrait' | 'landscape' | 'architecture' | 'abstract';
+    category: 'portrait' | 'landscape' | 'architecture' | 'abstract' | 'nature' | 'art';
     hints: string[];
 }

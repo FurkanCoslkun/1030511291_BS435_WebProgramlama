@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Mode, GameResult, ImageItem } from '../types/game';
 import { images } from '../Data/images';
 
@@ -7,11 +7,16 @@ type Props = {
     onEnd: (result: GameResult) => void;
 };
 
+// Zamanlı mod süresi (saniye)
+const TIME_LIMIT_SECONDS = 15;
+
+// Rastgele eleman seç
 function getRandomItem<T>(arr: T[]): T {
     const idx = Math.floor(Math.random() * arr.length);
     return arr[idx];
 }
 
+// Diziyi karıştır (Fisher–Yates)
 function shuffle<T>(arr: T[]): T[] {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -21,6 +26,7 @@ function shuffle<T>(arr: T[]): T[] {
     return copy;
 }
 
+// Her tur için: 1 AI + 2 gerçek seç
 function createRoundImages(all: ImageItem[]): ImageItem[] {
     const real = all.filter((img) => !img.isAI);
     const ai = all.filter((img) => img.isAI);
@@ -31,6 +37,7 @@ function createRoundImages(all: ImageItem[]): ImageItem[] {
     }
 
     const pickedAI = getRandomItem(ai);
+
     const firstReal = getRandomItem(real);
     const remainingReal = real.filter((r) => r.id !== firstReal.id);
     const secondReal = getRandomItem(remainingReal);
@@ -48,11 +55,52 @@ export default function GameScreen({ mode, onEnd }: Props) {
     const [showHint, setShowHint] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
 
-    const modeLabel = mode === 'classic' ? 'Klasik' : 'Zamanlı';
-    const modeDesc =
-        mode === 'classic' ? 'Süre sınırı yok. Dikkatli seç!' : 'Geri sayım eklenecek (sonraki adım).';
+    // Timer state (sadece time modda aktif)
+    const [timeLeft, setTimeLeft] = useState<number>(TIME_LIMIT_SECONDS);
+
+    const isTimed = mode === 'time';
+
+    const progress = Math.max(0, Math.min(100, (timeLeft / TIME_LIMIT_SECONDS) * 100));
+    const isUrgent = isTimed && timeLeft <= 5;
+    const isCritical = isTimed && timeLeft <= 3;
+
+    const modeLabel = isTimed ? 'Zamanlı' : 'Klasik';
+    const modeDesc = isTimed
+        ? `Geri sayım: ${TIME_LIMIT_SECONDS}s (süre bitince tur kaybedilir)`
+        : 'Süre sınırı yok. Dikkatli seç!';
 
     const aiImage = roundImages.find((img) => img.isAI) ?? null;
+
+    // Timer effect
+    useEffect(() => {
+        if (!isTimed) return;
+        if (isFinished) return;
+        if (timeLeft <= 0) return;
+
+        const id = window.setInterval(() => {
+            setTimeLeft((t) => t - 1);
+        }, 1000);
+
+        return () => window.clearInterval(id);
+    }, [isTimed, isFinished, timeLeft]);
+
+    // Süre biterse otomatik kayıp
+    useEffect(() => {
+        if (!isTimed) return;
+        if (isFinished) return;
+
+        if (timeLeft <= 0) {
+            setIsFinished(true);
+
+            const result: GameResult = {
+                correct: false,
+                firstGuessId: firstGuessId ?? 'timeout',
+                secondGuessId: secondGuessId ?? undefined,
+            };
+
+            onEnd(result);
+        }
+    }, [isTimed, isFinished, timeLeft, firstGuessId, secondGuessId, onEnd]);
 
     const handleSelect = (image: ImageItem) => {
         if (isFinished) return;
@@ -104,6 +152,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
             }}
         >
             <div style={{ width: 'min(1100px, 100%)' }}>
+                {/* Üst bilgi bar */}
                 <div
                     style={{
                         display: 'flex',
@@ -111,6 +160,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         marginBottom: 14,
+                        flexWrap: 'wrap',
                     }}
                 >
                     <div
@@ -134,8 +184,58 @@ export default function GameScreen({ mode, onEnd }: Props) {
                     <div style={{ fontSize: 12, color: '#94a3b8' }}>
                         Mod: <b style={{ color: '#e5e7eb' }}>{modeLabel}</b> — {modeDesc}
                     </div>
+
+                    {/* Timer chip */}
+                    {isTimed && (
+                        <div
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                padding: '8px 12px',
+                                borderRadius: 999,
+                                background: isUrgent ? 'rgba(239,68,68,0.18)' : 'rgba(99,102,241,0.18)',
+                                border: isUrgent
+                                    ? '1px solid rgba(239,68,68,0.28)'
+                                    : '1px solid rgba(99,102,241,0.35)',
+                                fontSize: 12,
+                                color: isUrgent ? '#fecaca' : '#c7d2fe',
+                                boxShadow: isUrgent ? '0 0 0 4px rgba(239,68,68,0.06)' : undefined,
+                                animation: isUrgent ? 'pulse 1s ease-in-out infinite' : undefined,
+                            }}
+                        >
+                            <span style={{ opacity: 0.95 }}>⏱</span>
+                            <span>Kalan:</span>
+                            <b style={{ color: '#fff' }}>{Math.max(timeLeft, 0)}s</b>
+                            {isCritical && <span style={{ marginLeft: 4 }}>⚠️</span>}
+                        </div>
+                    )}
                 </div>
 
+                {/* Progress bar */}
+                {isTimed && (
+                    <div
+                        style={{
+                            height: 10,
+                            borderRadius: 999,
+                            overflow: 'hidden',
+                            background: 'rgba(255,255,255,0.08)',
+                            border: '1px solid rgba(255,255,255,0.10)',
+                            marginBottom: 12,
+                        }}
+                    >
+                        <div
+                            style={{
+                                height: '100%',
+                                width: `${progress}%`,
+                                background: isUrgent ? 'rgba(239,68,68,0.85)' : 'rgba(99,102,241,0.85)',
+                                transition: 'width 0.25s ease',
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* Ana kart */}
                 <div
                     style={{
                         border: '1px solid rgba(255,255,255,0.10)',
@@ -146,6 +246,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
                         boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
                     }}
                 >
+                    {/* Durum mesajı */}
                     <div style={{ marginBottom: 12 }}>
                         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>AI görseli bul</div>
                         <div style={{ fontSize: 13, color: '#cbd5e1' }}>
@@ -156,6 +257,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
                         </div>
                     </div>
 
+                    {/* İpucu */}
                     {showHint && (
                         <div
                             style={{
@@ -172,6 +274,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
                         </div>
                     )}
 
+                    {/* Görseller */}
                     <div
                         style={{
                             display: 'grid',
