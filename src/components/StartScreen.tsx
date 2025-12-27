@@ -55,12 +55,12 @@ export default function StartScreen({ onStart }: Props) {
                     </div>
 
                     <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.15, letterSpacing: -0.5 }}>
-                        Yapay Zeka Görsel Tahmin Oyunu
+                        AI mı Gerçek mi?
                     </h1>
 
                     <p style={{ marginTop: 10, marginBottom: 0, fontSize: 14, color: '#cbd5e1' }}>
-                        Üç görselden <b>hangisinin AI tarafından üretildiğini</b> bul. İlk tahmin yanlışsa bir ipucu
-                        alırsın ve kalan iki görsel arasından ikinci şansın olur.
+                        Üç görsel arasından yapay zekâ tarafından üretilmiş olanı bulmaya çalış.
+                        Detaylara dikkat et ve sezgilerine güven.
                     </p>
 
                     <div
@@ -72,10 +72,23 @@ export default function StartScreen({ onStart }: Props) {
                         }}
                     >
                         {[
-                            { title: 'Hızlı tur', desc: 'Bir seçim → sonuç. Yanlışsa ipucu + 2. şans.' },
-                            { title: '2 oyun modu', desc: 'Klasik ve Zamanlı (timer eklenecek).' },
-                            { title: 'İpucu sistemi', desc: 'Arka plan, simetri, doku gibi ipuçları.' },
-                            { title: 'Skor sistemi', desc: 'Klasik modda doğru tahminlerle skorunu artır.' },
+                            {
+                                title: 'Hızlı tur',
+                                desc: 'Üç görsel arasından AI olanı bul. İlk tahmin yanlışsa ikinci şansın var.'
+                            },
+                            {
+                                title: '2 oyun modu',
+                                desc: 'Klasik (skor odaklı) ve Zamanlı (geri sayımlı) modlar.'
+                            },
+                            {
+                                title: 'Zorluk seviyesi',
+                                desc: 'Kolay, Orta ve Zor seçenekleriyle ipucu ve süre kuralları değişir.'
+                            },
+                            {
+                                title: 'Skor sistemi',
+                                desc: 'Klasik modda doğru tahminlerle skorunu artır.'
+                            },
+
                         ].map((item) => (
                             <div
                                 key={item.title}

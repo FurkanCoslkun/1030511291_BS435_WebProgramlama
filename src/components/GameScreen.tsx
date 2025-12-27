@@ -1,22 +1,24 @@
-import { useEffect, useState } from 'react';
-import type { Mode, GameResult, ImageItem } from '../types/game';
+import { useEffect, useMemo, useState } from 'react';
+import type { Mode, Difficulty, GameResult, ImageItem } from '../types/game';
 import { images } from '../Data/images';
 
 type Props = {
     mode: Mode;
+    difficulty: Difficulty;
     onEnd: (result: GameResult) => void;
 };
 
-// Zamanlı mod süresi (saniye)
-const TIME_LIMIT_SECONDS = 15;
+function getTimeLimitSeconds(difficulty: Difficulty) {
+    if (difficulty === 'easy') return 20;
+    if (difficulty === 'hard') return 10;
+    return 15; // medium
+}
 
-// Rastgele eleman seç
 function getRandomItem<T>(arr: T[]): T {
     const idx = Math.floor(Math.random() * arr.length);
     return arr[idx];
 }
 
-// Diziyi karıştır (Fisher–Yates)
 function shuffle<T>(arr: T[]): T[] {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -26,7 +28,6 @@ function shuffle<T>(arr: T[]): T[] {
     return copy;
 }
 
-// Her tur için: 1 AI + 2 gerçek seç
 function createRoundImages(all: ImageItem[]): ImageItem[] {
     const real = all.filter((img) => !img.isAI);
     const ai = all.filter((img) => img.isAI);
@@ -37,7 +38,6 @@ function createRoundImages(all: ImageItem[]): ImageItem[] {
     }
 
     const pickedAI = getRandomItem(ai);
-
     const firstReal = getRandomItem(real);
     const remainingReal = real.filter((r) => r.id !== firstReal.id);
     const secondReal = getRandomItem(remainingReal);
@@ -45,31 +45,38 @@ function createRoundImages(all: ImageItem[]): ImageItem[] {
     return shuffle([pickedAI, firstReal, secondReal]);
 }
 
-export default function GameScreen({ mode, onEnd }: Props) {
-    const [roundImages] = useState<ImageItem[]>(() => createRoundImages(images));
+export default function GameScreen({ mode, difficulty, onEnd }: Props) {
+    const [roundImages, setRoundImages] = useState<ImageItem[]>([]);
+
+    useEffect(() => {
+        setRoundImages(createRoundImages(images));
+    }, []);
+
 
     const [firstGuessId, setFirstGuessId] = useState<string | null>(null);
     const [secondGuessId, setSecondGuessId] = useState<string | null>(null);
 
     const [firstGuessWrong, setFirstGuessWrong] = useState(false);
-    const [showHint, setShowHint] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
 
-    // Timer state (sadece time modda aktif)
-    const [timeLeft, setTimeLeft] = useState<number>(TIME_LIMIT_SECONDS);
-
     const isTimed = mode === 'time';
+    const timeLimit = useMemo(() => getTimeLimitSeconds(difficulty), [difficulty]);
 
-    const progress = Math.max(0, Math.min(100, (timeLeft / TIME_LIMIT_SECONDS) * 100));
+    const [timeLeft, setTimeLeft] = useState<number>(isTimed ? timeLimit : 0);
+
+    // Easy: ipucu baştan açık, Hard: hiç yok
+    const [showHint, setShowHint] = useState<boolean>(difficulty === 'easy');
+
+    const aiImage = roundImages.find((img) => img.isAI) ?? null;
+
+    // UI indicator
+    const progress = isTimed ? Math.max(0, Math.min(100, (timeLeft / timeLimit) * 100)) : 0;
     const isUrgent = isTimed && timeLeft <= 5;
     const isCritical = isTimed && timeLeft <= 3;
 
     const modeLabel = isTimed ? 'Zamanlı' : 'Klasik';
-    const modeDesc = isTimed
-        ? `Geri sayım: ${TIME_LIMIT_SECONDS}s (süre bitince tur kaybedilir)`
-        : 'Süre sınırı yok. Dikkatli seç!';
-
-    const aiImage = roundImages.find((img) => img.isAI) ?? null;
+    const diffLabel =
+        difficulty === 'easy' ? 'Kolay' : difficulty === 'medium' ? 'Orta' : 'Zor';
 
     // Timer effect
     useEffect(() => {
@@ -91,16 +98,13 @@ export default function GameScreen({ mode, onEnd }: Props) {
 
         if (timeLeft <= 0) {
             setIsFinished(true);
-
-            const result: GameResult = {
+            onEnd({
                 correct: false,
                 firstGuessId: firstGuessId ?? 'timeout',
                 secondGuessId: secondGuessId ?? undefined,
-            };
-
-            onEnd(result);
+            });
         }
-    }, [isTimed, isFinished, timeLeft, firstGuessId, secondGuessId, onEnd]);
+    }, [isTimed, isFinished, timeLeft, firstGuessId, secondGuessId, onEnd, secondGuessId]);
 
     const handleSelect = (image: ImageItem) => {
         if (isFinished) return;
@@ -114,7 +118,8 @@ export default function GameScreen({ mode, onEnd }: Props) {
                 onEnd({ correct: true, firstGuessId: image.id });
             } else {
                 setFirstGuessWrong(true);
-                setShowHint(true);
+                // Medium/Easy: yanlışta ipucu açılır (easy zaten açık)
+                if (difficulty !== 'hard') setShowHint(true);
             }
             return;
         }
@@ -176,13 +181,11 @@ export default function GameScreen({ mode, onEnd }: Props) {
                             color: '#c7d2fe',
                         }}
                     >
-                        <span>Adım 2/2</span>
-                        <span style={{ opacity: 0.7 }}>•</span>
                         <span>Oyun</span>
-                    </div>
-
-                    <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                        Mod: <b style={{ color: '#e5e7eb' }}>{modeLabel}</b> — {modeDesc}
+                        <span style={{ opacity: 0.7 }}>•</span>
+                        <span>{modeLabel}</span>
+                        <span style={{ opacity: 0.7 }}>•</span>
+                        <span>{diffLabel}</span>
                     </div>
 
                     {/* Timer chip */}
@@ -252,13 +255,13 @@ export default function GameScreen({ mode, onEnd }: Props) {
                         <div style={{ fontSize: 13, color: '#cbd5e1' }}>
                             {!firstGuessId && 'AI tarafından üretilmiş olduğunu düşündüğün görseli seç.'}
                             {firstGuessId && firstGuessWrong && !secondGuessId &&
-                                'İlk tahminin yanlış. İpucunu oku ve kalan iki görselden birini seç.'}
+                                'İlk tahminin yanlış. Kalan iki görselden birini seç.'}
                             {isFinished && 'Tur bitti, sonuç ekranına yönlendiriliyorsun.'}
                         </div>
                     </div>
 
                     {/* İpucu */}
-                    {showHint && (
+                    {showHint && difficulty !== 'hard' && (
                         <div
                             style={{
                                 marginBottom: 14,
@@ -279,7 +282,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
                         style={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                            gap: 14,
+                            gap: 18,
                         }}
                     >
                         {roundImages.map((img) => {
@@ -314,7 +317,7 @@ export default function GameScreen({ mode, onEnd }: Props) {
                                         alt={img.category}
                                         style={{
                                             width: '100%',
-                                            height: 250,
+                                            height: 320,
                                             objectFit: 'cover',
                                             display: 'block',
                                         }}
@@ -325,7 +328,9 @@ export default function GameScreen({ mode, onEnd }: Props) {
                     </div>
 
                     <div style={{ marginTop: 12, fontSize: 12, color: '#94a3b8' }}>
-                        Not: İlk seçimde yanlış yaparsan, ipucu aldıktan sonra sadece kalan iki görselden seçim yapabilirsin.
+                        {difficulty === 'hard'
+                            ? 'Zor mod: ipucu yok.'
+                            : 'Yanlış ilk seçimde ipucu görüp kalan iki görselden seçim yapabilirsin.'}
                     </div>
                 </div>
             </div>

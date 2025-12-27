@@ -5,6 +5,7 @@ export const images: ImageItem[] = [
     // GERÇEK GÖRSELLER
     // =====================
 
+    // --- Portrait ---
     {
         id: 'real-portrait-1',
         url: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
@@ -26,7 +27,22 @@ export const images: ImageItem[] = [
         category: 'portrait',
         hints: ['Işık dağılımı doğal ve düzensiz.'],
     },
+    {
+        id: 'real-portrait-4',
+        url: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg',
+        isAI: false,
+        category: 'portrait',
+        hints: ['Yüzde küçük kusurlar ve doğal kırışıklıklar var.'],
+    },
+    {
+        id: 'real-portrait-5',
+        url: 'https://images.pexels.com/photos/428364/pexels-photo-428364.jpeg',
+        isAI: false,
+        category: 'portrait',
+        hints: ['Göz ve ağız hizası hafif dengesiz.'],
+    },
 
+    // --- Nature ---
     {
         id: 'real-nature-1',
         url: 'https://images.pexels.com/photos/34950/pexels-photo.jpg',
@@ -48,7 +64,22 @@ export const images: ImageItem[] = [
         category: 'nature',
         hints: ['Doğal renk tonları korunmuş.'],
     },
+    {
+        id: 'real-nature-4',
+        url: 'https://images.pexels.com/photos/672358/pexels-photo-672358.jpeg',
+        isAI: false,
+        category: 'nature',
+        hints: ['Doğal gölgeler karmaşık ve tutarsız.'],
+    },
+    {
+        id: 'real-nature-5',
+        url: 'https://images.pexels.com/photos/158607/cairn-fog-mystical-background-158607.jpeg',
+        isAI: false,
+        category: 'nature',
+        hints: ['Sis ve ışık geçişleri rastgele.'],
+    },
 
+    // --- Architecture ---
     {
         id: 'real-architecture-1',
         url: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg',
@@ -70,7 +101,22 @@ export const images: ImageItem[] = [
         category: 'architecture',
         hints: ['Yapı dokusu detaylı ve tutarlı.'],
     },
+    {
+        id: 'real-architecture-4',
+        url: 'https://images.pexels.com/photos/210617/pexels-photo-210617.jpeg',
+        isAI: false,
+        category: 'architecture',
+        hints: ['Dikey çizgiler tam paralel değil.'],
+    },
+    {
+        id: 'real-architecture-5',
+        url: 'https://images.pexels.com/photos/259962/pexels-photo-259962.jpeg',
+        isAI: false,
+        category: 'architecture',
+        hints: ['Pencere ve duvar oranları doğal.'],
+    },
 
+    // --- Art ---
     {
         id: 'real-art-1',
         url: 'https://images.pexels.com/photos/2832382/pexels-photo-2832382.jpeg',
@@ -97,6 +143,7 @@ export const images: ImageItem[] = [
     // AI GİBİ GÖRSELLER
     // =====================
 
+    // --- Portrait ---
     {
         id: 'ai-portrait-1',
         url: 'https://images.pexels.com/photos/1704488/pexels-photo-1704488.jpeg',
@@ -118,7 +165,22 @@ export const images: ImageItem[] = [
         category: 'portrait',
         hints: ['Işık kaynağı doğal görünmüyor.'],
     },
+    {
+        id: 'ai-portrait-4',
+        url: 'https://images.pexels.com/photos/91224/pexels-photo-91224.jpeg',
+        isAI: true,
+        category: 'portrait',
+        hints: ['Yüz oranları aşırı dengeli.'],
+    },
+    {
+        id: 'ai-portrait-5',
+        url: 'https://images.pexels.com/photos/774095/pexels-photo-774095.jpeg',
+        isAI: true,
+        category: 'portrait',
+        hints: ['Cilt dokusu plastik hissi veriyor.'],
+    },
 
+    // --- Art ---
     {
         id: 'ai-art-1',
         url: 'https://images.pexels.com/photos/1194420/pexels-photo-1194420.jpeg',
@@ -139,5 +201,21 @@ export const images: ImageItem[] = [
         isAI: true,
         category: 'art',
         hints: ['Kompozisyon gerçekçi olmayan şekilde dengeli.'],
+    },
+
+    // --- Nature / Abstract ---
+    {
+        id: 'ai-nature-1',
+        url: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg',
+        isAI: true,
+        category: 'nature',
+        hints: ['Doğada nadir görülen aşırı simetri var.'],
+    },
+    {
+        id: 'ai-nature-2',
+        url: 'https://images.pexels.com/photos/1292115/pexels-photo-1292115.jpeg',
+        isAI: true,
+        category: 'nature',
+        hints: ['Renk dağılımı gerçekçi değil.'],
     },
 ];

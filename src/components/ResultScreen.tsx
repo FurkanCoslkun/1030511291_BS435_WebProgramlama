@@ -1,16 +1,33 @@
-import type { GameResult } from '../types/game';
+import type { Difficulty, GameResult, Mode } from '../types/game';
 
 type Props = {
     result: GameResult;
     score: number;
+    mode?: Mode;
+    difficulty?: Difficulty;
     onRestart: () => void;
-    onMenu: () => void;  // ModeSelect
-    onHome: () => void;  // StartScreen
+    onMenu: () => void;
+    onHome: () => void;
 };
+
+function modeLabel(mode?: Mode) {
+    if (mode === 'time') return 'Zamanlı';
+    if (mode === 'classic') return 'Klasik';
+    return '—';
+}
+
+function diffLabel(d?: Difficulty) {
+    if (d === 'easy') return 'Kolay';
+    if (d === 'medium') return 'Orta';
+    if (d === 'hard') return 'Zor';
+    return '—';
+}
 
 export default function ResultScreen({
                                          result,
                                          score,
+                                         mode,
+                                         difficulty,
                                          onRestart,
                                          onMenu,
                                          onHome,
@@ -26,8 +43,11 @@ export default function ResultScreen({
     const desc = isTimeout
         ? 'Zaman dolduğu için bu tur otomatik olarak kaybedildi.'
         : result.correct
-            ? 'AI görselini doğru buldun. Yeni tura geçebilir, modu değiştirebilir veya ana menüye dönebilirsin.'
-            : 'AI görselini bulamadın. Yeni tur başlatabilir, modu değiştirebilir veya ana menüye dönebilirsin.';
+            ? 'AI görselini doğru buldun.'
+            : 'AI görselini bulamadın.';
+
+    const metaMode = modeLabel(mode);
+    const metaDiff = diffLabel(difficulty);
 
     return (
         <div
@@ -53,96 +73,67 @@ export default function ResultScreen({
                     textAlign: 'center',
                 }}
             >
-                <div
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        padding: '6px 10px',
-                        borderRadius: 999,
-                        background: isTimeout
-                            ? 'rgba(245,158,11,0.18)'
-                            : result.correct
-                                ? 'rgba(34,197,94,0.18)'
-                                : 'rgba(239,68,68,0.16)',
-                        border: isTimeout
-                            ? '1px solid rgba(245,158,11,0.30)'
-                            : result.correct
-                                ? '1px solid rgba(34,197,94,0.30)'
-                                : '1px solid rgba(239,68,68,0.28)',
-                        fontSize: 12,
-                        color: isTimeout
-                            ? '#fde68a'
-                            : result.correct
-                                ? '#bbf7d0'
-                                : '#fecaca',
-                        marginBottom: 10,
-                    }}
-                >
-                    {isTimeout ? 'Süre Doldu' : result.correct ? 'Doğru Tahmin' : 'Yanlış Tahmin'}
-                </div>
-
                 <h2 style={{ margin: 0, fontSize: 26, letterSpacing: -0.2 }}>{title}</h2>
-                <p style={{ marginTop: 10, marginBottom: 18, fontSize: 14, color: '#cbd5e1' }}>
+
+                <p style={{ marginTop: 10, marginBottom: 16, fontSize: 14, color: '#cbd5e1' }}>
                     {desc}
                 </p>
 
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 12,
-                        margin: '0 auto 18px',
-                        maxWidth: 560,
-                    }}
-                >
-                    <div
-                        style={{
-                            borderRadius: 12,
-                            padding: 12,
-                            border: '1px solid rgba(255,255,255,0.10)',
-                            background: 'rgba(0,0,0,0.22)',
-                        }}
-                    >
-                        <div style={{ fontSize: 12, color: '#94a3b8' }}>Klasik Mod Skoru</div>
-                        <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>{score}</div>
-                    </div>
-
-                    <div
-                        style={{
-                            borderRadius: 12,
-                            padding: 12,
-                            border: '1px solid rgba(255,255,255,0.10)',
-                            background: 'rgba(0,0,0,0.22)',
-                        }}
-                    >
-                        <div style={{ fontSize: 12, color: '#94a3b8' }}>Tur Bilgisi</div>
-                        <div style={{ fontSize: 13, marginTop: 6, color: '#e5e7eb' }}>
-                            {isTimeout ? (
-                                <span>Süre doldu, seçim yapılmadı.</span>
-                            ) : (
-                                <>
-                                    1. seçim: <b>{result.firstGuessId}</b>
-                                    {result.secondGuessId && (
-                                        <>
-                                            <br />
-                                            2. seçim: <b>{result.secondGuessId}</b>
-                                        </>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
+                {/* Mod + Zorluk bilgisi */}
                 <div
                     style={{
                         display: 'flex',
-                        gap: 12,
+                        gap: 10,
                         justifyContent: 'center',
                         flexWrap: 'wrap',
+                        marginBottom: 14,
                     }}
                 >
+                    <div
+                        style={{
+                            padding: '6px 10px',
+                            borderRadius: 999,
+                            background: 'rgba(99,102,241,0.18)',
+                            border: '1px solid rgba(99,102,241,0.35)',
+                            fontSize: 12,
+                            color: '#c7d2fe',
+                        }}
+                    >
+                        Mod: <b style={{ color: '#fff' }}>{metaMode}</b>
+                    </div>
+
+                    <div
+                        style={{
+                            padding: '6px 10px',
+                            borderRadius: 999,
+                            background: 'rgba(34,197,94,0.14)',
+                            border: '1px solid rgba(34,197,94,0.28)',
+                            fontSize: 12,
+                            color: '#bbf7d0',
+                        }}
+                    >
+                        Zorluk: <b style={{ color: '#fff' }}>{metaDiff}</b>
+                    </div>
+                </div>
+
+                {/* ✅ Skor kutusu: SADECE KLASİK MOD */}
+                {mode === 'classic' && (
+                    <div
+                        style={{
+                            borderRadius: 12,
+                            padding: 12,
+                            border: '1px solid rgba(255,255,255,0.10)',
+                            background: 'rgba(0,0,0,0.22)',
+                            maxWidth: 420,
+                            margin: '0 auto 18px',
+                        }}
+                    >
+                        <div style={{ fontSize: 12, color: '#94a3b8' }}>Klasik Mod Skoru</div>
+                        <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6 }}>{score}</div>
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button
                         type="button"
                         onClick={onRestart}
@@ -153,10 +144,10 @@ export default function ResultScreen({
                             background:
                                 'linear-gradient(135deg, rgba(99,102,241,0.95), rgba(34,197,94,0.75))',
                             color: '#0b0f19',
-                            fontWeight: 800,
+                            fontWeight: 900,
                             cursor: 'pointer',
-                            boxShadow: '0 10px 22px rgba(0,0,0,0.35)',
                             minWidth: 160,
+                            boxShadow: '0 10px 22px rgba(0,0,0,0.35)',
                         }}
                     >
                         Yeni Tur 🔁
